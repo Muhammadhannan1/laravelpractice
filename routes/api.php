@@ -23,8 +23,20 @@ Route::get('/test', function(){
 });
 
 Route::post('user/store','App\Http\Controllers\Api\UserController@store');
+
+
 Route::post('user/login','App\Http\Controllers\Api\UserController@login');
+
+
 Route::get('user/get/{flag}',[UserController::class,'index']);
-Route::get('user/{id}',[UserController::class,'show']);
+
+Route::middleware('auth:api')->group(function(){
+    Route::get('user/{id}',[UserController::class,'show']);
+
+});
+
+
 Route::delete('user/{id}',[UserController::class,'destroy']);
+
+
 Route::put('user/update/{id}',[UserController::class,'update']);

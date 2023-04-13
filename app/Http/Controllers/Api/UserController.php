@@ -8,7 +8,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Response;
-use Hash;
+//use Hash;
+use Illuminate\Support\Facades\Hash;
+
 class UserController extends Controller
 {
     /**
@@ -82,7 +84,7 @@ class UserController extends Controller
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                p($e->getMessages());
+                p($e->getMessage());
                 $user = null;
             }
             if ($user!=null) {
@@ -193,18 +195,37 @@ class UserController extends Controller
         return response()->json($response,$respCode);
     }
 
-    public function login(Request $request)
-    {
-        $validatedData = $request->validate([
+    public function login(Request $request){
+        $validator = Validator::make($request->all(),[
             'email'=>['required','email'],
             'password'=>['required'],
         ]);
+        if($validator->fails()){
+            return response()->json($validator->messages(),400);
+        }
+        else{
+            $data=[
+                'email'=>$request->email,
+                'password'=>$request->password
+            ];
+            try {
+                $user = User::where(['email'=>$data['email'],'password'=>Hash::check($data['password'],'password')])->first();
 
-            $user = User::where(['email'=>$validatedData['email'],'password'=>$validatedData['password']])->first();
-            $token= $user->createToken("auth_token")->accessToken;
-            return response()->json(
-                ['message'=>'Logged in Successfully','token'=>$token,'user'=>$user],200
-            );
+                $token = $user->createToken("auth_token")->accessToken;
+                return response()->json(
+                   ['message'=>'Logged in Successfully','token'=>$token,'user'=>$user],200
+               );
+              
+                return response()->json(['messgae'=>'user is null']);
+               
+            } 
+            catch (\Exception $e) {
+                p($e->getMessage());
+            }
+        }
+ 
 
     }
-}
+
+};
+
